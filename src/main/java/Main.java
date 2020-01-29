@@ -7,35 +7,48 @@ import java.util.List;
 
 public class Main {
 
-    private static String desktopPath = "C:\\Users\\AlxAlx\\Desktop\\";
-    private static File testArchive = new File(desktopPath + "test.7z");
-
+    private static String desktopPath = "D:\\Temp\\";
+    private static File testArchive = new File(desktopPath + "killlakill.7z");
+    private static int convertedBytes = 0;
     public static void main(String[] args) throws IOException {
         //writeImage(exampleForSO(), desktopPath, "test.png");
         //writeImage(convertToImage(desktopPath + "test.7z"), desktopPath, "test.7z.png");
         //System.out.println(t.getTest());
-        File image1F = new File(desktopPath + "testImnage.png");
-        File image2F = new File(desktopPath + "test.2 (1).png");
+        File image1F = new File(desktopPath + "testImnagergb.17688774.png");
+        File image2F = new File(desktopPath + "testgoogle.17906971.png");
 
-        //BufferedImage image1 = ImageIO.read(image1F);
-        //BufferedImage image2 = ImageIO.read(image2F);
         System.out.println(testArchive.getAbsolutePath());
-        writeImage(convertToImage(testArchive.getAbsolutePath()), desktopPath, "testImnage.png");
-        //convertToBytes(image1,desktopPath + "erjk.7z");
+        writeImage(convertToImage(testArchive.getAbsolutePath()), desktopPath, "testImnagergb");
+        //convertToBytes(image2F, desktopPath, "testNEW.7z");
     }
 
-    public static File convertToBytes(BufferedImage b1, String filepath) throws IOException {
-        File file = new File(filepath);
+    public static File convertToBytes(File b2, String filepath, String filename) throws IOException {
+        BufferedImage b1 = ImageIO.read(b2);
+        File file = new File(filepath + filename);
+        System.out.println(b2.getName());
+        int bytesToDo = Integer.parseInt(b2.getName().split("\\.")[b2.getName().split("\\.").length-2]);
+
         if (!file.exists()) {
             file.createNewFile();
         }
         OutputStream outputStream = new FileOutputStream(file);
 
         int[] pixels = b1.getRGB(0,0,b1.getWidth(),b1.getHeight(),null,0,b1.getWidth());
-        for (int i : pixels){
-            if (i != 0) {
+        for (int i : pixels) {
+            if (i != 0 && bytesToDo > 0) {
                 int newPixel = i >> 16 & 0xff; // getting the red value
                 outputStream.write(newPixel);
+                bytesToDo--;
+                if(bytesToDo > 0){
+                    newPixel = (i & 0x0000FF00) >> 8; // getting the green value
+                    outputStream.write(newPixel);
+                    bytesToDo--;
+                }
+                if(bytesToDo > 0){
+                    newPixel = (i & 0x000000FF); // getting the blue value
+                    outputStream.write(newPixel);
+                    bytesToDo--;
+                }
             }
         }
         outputStream.flush();
@@ -69,6 +82,14 @@ public class Main {
             int bytesConverted = 0;
             while ((byteRead = inputStream.read()) != -1) {
                 red = byteRead;
+                if((byteRead = inputStream.read()) != -1){
+                    bytesConverted++;
+                    green = byteRead;
+                }
+                if ((byteRead = inputStream.read()) != -1) {
+                    bytesConverted++;
+                    blue = byteRead;
+                }
                 imagePixels.add((alpha & 0xFF) << 24
                         | (red & 0xFF) << 16
                         | (green & 0xFF) << 8
@@ -78,8 +99,7 @@ public class Main {
 
             int pixels = imagePixels.size();
             maxHeight = 1000;
-            maxWidth = (int) Math.ceil(imagePixels.size()/maxHeight);
-            maxWidth++;
+            maxWidth = (int) Math.ceil(imagePixels.size()/maxHeight) + 1;
             while (imagePixels.size() < maxHeight*maxWidth) {
                 imagePixels.add(0);
             }
@@ -92,6 +112,7 @@ public class Main {
             imageOut.setRGB(0, 0, maxWidth, maxHeight, imageOutPixels, 0, maxWidth);
 
             System.out.println((imageOut.getHeight() * imageOut.getWidth()) + " pixels and only : " + bytesConverted + " bytes converted!");
+            convertedBytes = bytesConverted;
             return imageOut;
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -145,7 +166,7 @@ public class Main {
 
     public static void writeImage(BufferedImage b, String path, String filename) {
         try {
-            File outputfile = new File(path + filename);
+            File outputfile = new File(path + filename + "." + convertedBytes + ".png");
             ImageIO.write(b, "png", outputfile);
         } catch (IOException e) {
             // handle exception
