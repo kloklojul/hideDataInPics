@@ -7,19 +7,19 @@ import java.util.List;
 
 public class Main {
 
-    private static String desktopPath = "D:\\Temp\\";
-    private static File testArchive = new File(desktopPath + "killlakill.7z");
+    private static String desktopPath = "C:\\Users\\Alx\\Desktop\\";
+    private static File testArchive = new File(desktopPath + "Desktop.rar");
     private static int convertedBytes = 0;
     public static void main(String[] args) throws IOException {
         //writeImage(exampleForSO(), desktopPath, "test.png");
         //writeImage(convertToImage(desktopPath + "test.7z"), desktopPath, "test.7z.png");
         //System.out.println(t.getTest());
         File image1F = new File(desktopPath + "testImnagergb.17688774.png");
-        File image2F = new File(desktopPath + "testgoogle.17906971.png");
+        File image2F = new File(desktopPath + "testImage.3126807.png");
 
         System.out.println(testArchive.getAbsolutePath());
-        writeImage(convertToImage(testArchive.getAbsolutePath()), desktopPath, "testImnagergb");
-        //convertToBytes(image2F, desktopPath, "testNEW.7z");
+        //writeImage(convertToImage(testArchive.getAbsolutePath()), desktopPath, "testImage");
+        //convertToBytes(image2F, desktopPath, "testNEW.rar");
     }
 
     public static File convertToBytes(File b2, String filepath, String filename) throws IOException {
@@ -35,17 +35,22 @@ public class Main {
 
         int[] pixels = b1.getRGB(0,0,b1.getWidth(),b1.getHeight(),null,0,b1.getWidth());
         for (int i : pixels) {
-            if (i != 0 && bytesToDo > 0) {
-                int newPixel = i >> 16 & 0xff; // getting the red value
+            if (bytesToDo > 0) {
+                int newPixel = (i >> 24) & 0x000000FF; // getting the red value
                 outputStream.write(newPixel);
                 bytesToDo--;
                 if(bytesToDo > 0){
-                    newPixel = (i & 0x0000FF00) >> 8; // getting the green value
+                    newPixel = (i >> 16) & 0x000000FF; // getting the red value
                     outputStream.write(newPixel);
                     bytesToDo--;
                 }
                 if(bytesToDo > 0){
-                    newPixel = (i & 0x000000FF); // getting the blue value
+                    newPixel = (i >>8 ) & 0x000000FF; // getting the green value
+                    outputStream.write(newPixel);
+                    bytesToDo--;
+                }
+                if(bytesToDo > 0){
+                    newPixel = i & 0x000000FF; // getting the blue value
                     outputStream.write(newPixel);
                     bytesToDo--;
                 }
@@ -81,7 +86,12 @@ public class Main {
             ArrayList<Integer> imagePixels = new ArrayList<Integer>();
             int bytesConverted = 0;
             while ((byteRead = inputStream.read()) != -1) {
-                red = byteRead;
+                alpha = byteRead;
+                bytesConverted++;
+                if((byteRead = inputStream.read()) != -1){
+                    bytesConverted++;
+                    red = byteRead;
+                }
                 if((byteRead = inputStream.read()) != -1){
                     bytesConverted++;
                     green = byteRead;
@@ -94,10 +104,8 @@ public class Main {
                         | (red & 0xFF) << 16
                         | (green & 0xFF) << 8
                         | (blue & 0xFF));
-                bytesConverted++;
-            }
 
-            int pixels = imagePixels.size();
+            }
             maxHeight = 1000;
             maxWidth = (int) Math.ceil(imagePixels.size()/maxHeight) + 1;
             while (imagePixels.size() < maxHeight*maxWidth) {
