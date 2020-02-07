@@ -1,6 +1,17 @@
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.rpc.ApiException;
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.photos.library.v1.PhotosLibraryClient;
+import com.google.photos.library.v1.PhotosLibrarySettings;
+import com.google.photos.types.proto.Album;
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -10,7 +21,36 @@ public class Main {
     private static String desktopPath = "D:\\Temp\\";
     private static File testArchive = new File(desktopPath + "killlakill.7z");
     private static int convertedBytes = 0;
+
+    private static Credentials getUserCredentials(String credentialsPath, List<String> selectedScopes)
+            throws IOException, GeneralSecurityException {
+        GoogleClientSecrets clientSecrets =
+                GoogleClientSecrets.load(
+                        JSON_FACTORY, new InputStreamReader(new FileInputStream(credentialsPath)));
+        String clientId = clientSecrets.getDetails().getClientId();
+        String clientSecret = clientSecrets.getDetails().getClientSecret();
+
+        GoogleAuthorizationCodeFlow flow =
+                new GoogleAuthorizationCodeFlow.Builder(
+                        GoogleNetHttpTransport.newTrustedTransport(),
+                        JSON_FACTORY,
+                        clientSecrets,
+                        selectedScopes)
+                        .setDataStoreFactory(new FileDataStoreFactory(DATA_STORE_DIR))
+                        .setAccessType("offline")
+                        .build();
+        LocalServerReceiver receiver =
+                new LocalServerReceiver.Builder().setPort(LOCAL_RECEIVER_PORT).build();
+        Credential credential = new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
+        return UserCredentials.newBuilder()
+                .setClientId(clientId)
+                .setClientSecret(clientSecret)
+                .setRefreshToken(credential.getRefreshToken())
+                .build();
+    }
+
     public static void main(String[] args) throws IOException {
+        /*
         //writeImage(exampleForSO(), desktopPath, "test.png");
         //writeImage(convertToImage(desktopPath + "test.7z"), desktopPath, "test.7z.png");
         //System.out.println(t.getTest());
@@ -20,6 +60,31 @@ public class Main {
         System.out.println(testArchive.getAbsolutePath());
         writeImage(convertToImage(testArchive.getAbsolutePath()), desktopPath, "testImnagergb");
         //convertToBytes(image2F, desktopPath, "testNEW.7z");
+
+         */
+        // Set up the Photos Library Client that interacts with the API
+
+        PhotosLibrarySettings settings =
+                PhotosLibrarySettings.newBuilder()
+                        .setCredentialsProvider(
+                                FixedCredentialsProvider.create( getUserCredentials("C:\\Users\\AlxAlx\\Desktop\\credentials-for-photo.json", selectedScopes)))
+                        .build();
+
+        try (PhotosLibraryClient photosLibraryClient =
+                     PhotosLibraryClient.initialize(settings)) {
+
+            // Create a new Album  with at title
+            Album createdAlbum = photosLibraryClient.createAlbum("My Test Album");
+
+            // Get some properties from the album, such as its ID and product URL
+            String id = createdAlbum.getId();
+            String url = createdAlbum.getProductUrl();
+            System.out.println(id + " url: " + url);
+
+        } catch (ApiException e) {
+            // Error during album creation
+            System.out.printf("ERROR DURING ALBUM CREATION");
+        }
     }
 
     public static File convertToBytes(File b2, String filepath, String filename) throws IOException {
